@@ -1,0 +1,117 @@
+---
+title: "Teoría de la Información"
+subtitle: "Estimación de la entropía en series de datos"
+author: "Dr. Julio César Ramírez Pacheco"
+date: "18/11/2020"
+output:
+  rmdformats::readthedown:
+    highlight: zenburn
+    cards: false
+---
+
+
+```{r setup, include=FALSE}
+library(rmdformats)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# El concepto de entropía
+
+La entropía se puede interpretar como un indicativo de la complejidad en una serie de datos aleatorios $\{X_1, X_2, \ldots, X_N\}$. La entropía usualmente se calcula utilizando una función de masa de probabilidad $p_j$ que cumple con las siguientes propiedades:
+
+- $p_j \ge 0, \, j  \in 0,1, \ldots, N$
+- $\sum_{j=1}^N{p_j} = 1$
+
+`R` tiene múltiples paquetes y funcionalidades que permiten estimar la `pmf` de un conjunto de datos como el descrito anteriormente. El histograma es una herramienta que permite estimar la `pmf` de un conjunto de datos. En el ejemplo que sigue se muestra la forma de estimar la `pmf` en `R`:
+
+```{r}
+set.seed(1234)                       # Para hacer el análisis reproducible
+datos     <- rnorm(512,0,1)          # Se generan 512 valores normales
+histogram <- hist(datos, plot=FALSE) # Se calcula el histograma
+pmf       <- histogram$counts/sum(histogram$counts)  # Se calcula la pmf
+sum(pmf)                             # Se verifica que cumpla con las propiedades
+
+```
+
+## Ejercicios:
+
+- Estimar la `pmf` utilizando el utilizando los paquetes `ASH` y `KernSmoooth`.
+- ¿Cuál es la ventaja de utilizar los métodos anteriores sobre el histograma?
+- Utilizando el comando `hist` y los paquetes `ASH` y `KernSmooth` verifique el tiempo requerido para estimar la densidad de una serie de datos Gaussianos con $\mu=1$ y varianza $\sigma^2=1$ y longitudes $N=2^i, \, i=8,9,10, 11, \ldots 16.$ (es necesario incluir un gráfico en `highcharter`)
+
+# La entropía utilizando el histograma
+
+Volviendo de nuevo al ejemplo anterior, podemos estimar la entropía de Shannon, utilizando la `pmf` obtenida mediante el histograma y así obtener un estimador empírico de la entropía de Shannon. A continuación mostramos la forma de obtener la entropía de una serie de datos obtenida en ventanas independientes o contiguas de longitud $512$:
+
+```{r}
+set.seed(1234)
+datos        <- rnorm(32768)
+wLength      <- 512
+plot(datos, type = "l", main="Serie de datos normal", ylab="Valores", xlab="Tiempo, t")
+noVentanas    <- length(datos)/wLength
+entropies     <- numeric(noVentanas)
+index         <- numeric(noVentanas)
+for(i in 1:noVentanas)
+{
+  
+  dataW        <- datos[wLength*(i-1)+1:wLength*i]
+  histo        <- hist(dataW, breaks=8,plot=FALSE)
+  pmf          <- histo$counts/sum(histo$counts)
+  entropies[i] <- -1*sum(pmf*log(pmf))
+  index[i]     <- wLength*(i-1)+1
+}
+plot(index, entropies, type = "l", main="Entropías empíricas para datos normales", xlab="Tiempo, t", ylab="Valores de entropía")
+```
+
+## Preguntas
+
+1. ¿Porqué existen valores discontinuos en la entropía?
+2. ¿Con qué código soluciona el problema de las discontinuidades?
+3. Ahora calcule la entropía de una serie de datos normales, denotados por $X_t$ (con $\mu=0$ y $\sigma=2$) pero ahora añadanle (súmenle) una segunda función $r_t$, es decir, hallen la entropía de la serie $Y_t = X_t+r_t$ con $r_t$ definida por:
+$$ 
+r_t = \begin{cases}
+\sigma/4 & t\ge 16384\\
+0 & \mbox{otro caso}
+\end{cases}
+$$
+4. Repitan el paso $3$ para $r_t$ dada por:
+$$ 
+r_t = \begin{cases}
+\sigma/2 & t\ge 16384\\
+0 & \mbox{otro caso}
+\end{cases}
+$$
+5. Repitan el paso $3$ para $r_t$ dada por:
+$$ 
+r_t = \begin{cases}
+\sigma & t\ge 16384\\
+0 & \mbox{otro caso}
+\end{cases}
+$$
+6. ¿Tiene algún efecto la longitud del salto en $r_t$ en la forma de la entropía? Explique.
+7. ¿Qué sucede ahora si $r_t$ es de la forma:
+$$ 
+r_t = \begin{cases}
+\sigma & 15872 \le t\le 16896\\
+0 & \mbox{otro caso}
+\end{cases}
+$$?
+8. Repita los pasos 3-7 pero ahora usando la entropía de Harvda con parámetro $\alpha=3$ y $\alpha=9$. ¿Qué efecto tiene $\alpha$?
+
+
+# Entropía utilizando ventanas deslizantes
+
+El cálculo de la entropía por ventanas independientes dada arriba resulta útil en casos en dónde la función no tiene dependencia en los valores futuros (descorrelacionadas). Para el caso de funciones correlacionadas, el cálculo de la entropía por ventanas deslizantes traslapadas resulta útil para descubrir ciertas fenomenologías en los datos. El cálculo por ventanas deslizantes de tamaño $W$ se realiza sobre una secuencia de datos $X_1, X_2, \ldots, X_N$. La ventana ($W\le N$) se va deslizando sobre los datos con factor $\Delta$ y de esta forma subconjuntos de los datos $X_i$ toman la siguiente forma:
+$$
+X(m; W, \Delta) = x_j \times \Pi(\frac{t-m\Delta}{W}-\frac{1}{2}),
+$$
+donde $m\Delta \le j \le m\Delta + W$ y $m=0,1,2, \ldots$. Finalmente se puede graficar $nW + \Delta, n=1,2,3, \ldots$ contra las entropías y verificar algún patrón en los datos.
+
+## Ejercicios
+
+- Implementar en `R` la metodología del cálculo de la entropía de Harvda normalizada por ventanas deslizantes. La función debe tener la forma `harvda_deslizante(datos, w.length=512, s.factor=10, a.parameter=0.8, ent.type=c("hist", "ash", "kern"))`, donde `w.length` es la longitud de la ventana, `s.factor` es el factor de deslizamiento y `a.parameter` es el parámetro $\alpha$ de la entropía de Harvda. Además la función puede calcular la entropia usando el histograma, por el método ash o por alguna metodología kernel (con el parámetro `ent.type`).
+- Aplicar la entropía calculada con los datos generados anteriormente, es decir:
+  - Los pasos $3,4,5$ y $7$ en donde los datos se dan como $X_t+r_t$.
+  - ¿Tiene algún efecto el parámetro $a$ en la forma de la entropía? ¿Tiene alguna ventaja calcular la entropía de Harvda por otro método diferente al histograma?
+  - Además del histograma y los estimadores tipo kernel, existen otros métodos para estimar la distribución de una serie de datos. Investigue: ¿en qué consiste la entropía de permutación?
