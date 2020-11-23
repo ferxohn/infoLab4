@@ -1,8 +1,8 @@
 ---
 title: "Teoría de la Información"
 subtitle: "Estimación de la entropía en series de datos"
-author: "Dr. Julio César Ramírez Pacheco"
-date: "18/11/2020"
+author: "Vanessa Martínez Romero, Moisés Emiliano Arellano Ávila y Fernando Gómez Perera"
+date: "25/11/2020"
 output:
   rmdformats::readthedown:
     highlight: zenburn
