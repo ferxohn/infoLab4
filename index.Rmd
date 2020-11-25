@@ -15,6 +15,7 @@ library(rmdformats)
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+*Profr. Julio César Ramírez Pacheco*
 
 # El concepto de entropía
 
@@ -37,8 +38,43 @@ sum(pmf)                             # Se verifica que cumpla con las propiedade
 ## Ejercicios:
 
 - Estimar la `pmf` utilizando el utilizando los paquetes `ASH` y `KernSmoooth`.
+
+*R=*
+
+Usando el paquete `ASH`, la `pmf` se calcula de la siguiente forma.
+
+```{r pmf_ash, message=FALSE}
+pacman::p_load(ash)
+
+# Se calcula el histograma desplazado promediado univariado (en inglés, univariate averaged shifted histogram o ASH) usando un kernel polinomial, que es el que usa por defecto el paquete.
+histogram_ash <- ash1(bin1(datos))
+
+pmf <- histogram_ash$y / sum(histogram_ash$y)
+sum(pmf)
+```
+
+Usando el paquete `KernSmooth`, la `pmf` se calcula de la siguiente forma.
+
+```{r pmf_kernsmooth, message=FALSE}
+pacman::p_load(KernSmooth)
+
+# Estimación de densidad de kernel agrupada (Binned Kernel Density Estimate) sobre los datos
+bkde_kernsmooth <- bkde(datos)
+
+pmf <- bkde_kernsmooth$y / sum(bkde_kernsmooth$y)
+sum(pmf)
+```
+
+
 - ¿Cuál es la ventaja de utilizar los métodos anteriores sobre el histograma?
+
+*R=*
+
+Los métodos que ofrecen estos paquetes son mucho más robustos que el histograma para calcular la pmf. Además, permiten aproximar la función de distintas formas, ya sea usando distintos kernels o llevando a cabo la estimación para una función en 2D.
+
 - Utilizando el comando `hist` y los paquetes `ASH` y `KernSmooth` verifique el tiempo requerido para estimar la densidad de una serie de datos Gaussianos con $\mu=1$ y varianza $\sigma^2=1$ y longitudes $N=2^i, \, i=8,9,10, 11, \ldots 16.$ (es necesario incluir un gráfico en `highcharter`)
+
+
 
 # La entropía utilizando el histograma
 
