@@ -83,9 +83,10 @@ res_hist <- c()
 res_ash1 <- c()
 res_bkde <- c()
 
+set.seed(1234)
+
 # Obtener el tiempo de ejecucion usando cada funcion con un valor de i
 for (i in 8:16) {
-  set.seed(1234)
   N <- 2^i
   datos <- rnorm(N, mean = 1, sd = 1)
   res_hist <- append(res_hist, system.time(hist(datos))["elapsed"])
@@ -127,7 +128,7 @@ index         <- numeric(noVentanas)
 for(i in 1:noVentanas)
 {
   
-  dataW        <- datos[wLength*(i-1)+1:wLength*i]
+  dataW        <- datos[(wLength*(i-1)+1):(wLength*i)]
   histo        <- hist(dataW, breaks=8,plot=FALSE)
   pmf          <- histo$counts/sum(histo$counts)
   entropies[i] <- -1*sum(pmf*log(pmf))
@@ -157,6 +158,8 @@ r_t = \begin{cases}
 0 & \mbox{otro caso}
 \end{cases}
 $$
+*R=*
+
 ```{r rt_entropy_3}
 # Funcion r_t
 r_t <- function(t, sigma) ifelse(t >= 16384, sigma / 4, 0)
@@ -171,7 +174,7 @@ index         <- numeric(noVentanas)
 for(i in 1:noVentanas)
 {
   
-  dataW        <- datos[wLength*(i-1)+1:wLength*i]
+  dataW        <- datos[(wLength*(i-1)+1):(wLength*i)]
   histo        <- hist(dataW, breaks=8,plot=FALSE)
   pmf          <- histo$counts/sum(histo$counts)
   entropies[i] <- -1*sum(pmf*log(pmf))
@@ -188,6 +191,7 @@ r_t = \begin{cases}
 0 & \mbox{otro caso}
 \end{cases}
 $$
+*R=*
 
 ```{r rt_entropy_4}
 # Funcion r_t
@@ -203,7 +207,7 @@ index         <- numeric(noVentanas)
 for(i in 1:noVentanas)
 {
   
-  dataW        <- datos[wLength*(i-1)+1:wLength*i]
+  dataW        <- datos[(wLength*(i-1)+1):(wLength*i)]
   histo        <- hist(dataW, breaks=8,plot=FALSE)
   pmf          <- histo$counts/sum(histo$counts)
   entropies[i] <- -1*sum(pmf*log(pmf))
@@ -219,6 +223,8 @@ r_t = \begin{cases}
 0 & \mbox{otro caso}
 \end{cases}
 $$
+*R=*
+
 ```{r rt_entropy_5}
 # Funcion r_t
 r_t <- function(t, sigma) ifelse(t >= 16384, sigma, 0)
@@ -233,7 +239,7 @@ index         <- numeric(noVentanas)
 for(i in 1:noVentanas)
 {
   
-  dataW        <- datos[wLength*(i-1)+1:wLength*i]
+  dataW        <- datos[(wLength*(i-1)+1):(wLength*i)]
   histo        <- hist(dataW, breaks=8,plot=FALSE)
   pmf          <- histo$counts/sum(histo$counts)
   entropies[i] <- -1*sum(pmf*log(pmf))
@@ -257,6 +263,8 @@ r_t = \begin{cases}
 $$
 ?
 
+*R=*
+
 ```{r rt_entropy_6}
 # Funcion r_t
 r_t <- function(t, sigma) ifelse(15872 <= t & t<= 16896, sigma, 0)
@@ -271,7 +279,7 @@ index         <- numeric(noVentanas)
 for(i in 1:noVentanas)
 {
   
-  dataW        <- datos[wLength*(i-1)+1:wLength*i]
+  dataW        <- datos[(wLength*(i-1)+1):(wLength*i)]
   histo        <- hist(dataW, breaks=8,plot=FALSE)
   pmf          <- histo$counts/sum(histo$counts)
   entropies[i] <- -1*sum(pmf*log(pmf))
@@ -280,16 +288,30 @@ for(i in 1:noVentanas)
 plot(index, entropies, type = "l", main="Entropías empíricas para datos normales", xlab="Tiempo, t", ylab="Valores de entropía")
 ```
 
-8. Repita los pasos 3-7 pero ahora usando la entropía de Harvda con parámetro $\alpha=3$ y $\alpha=9$. ¿Qué efecto tiene $\alpha$?
+
+
+8. Repita los pasos 3-7 pero ahora usando la entropía de Havrda con parámetro $\alpha=3$ y $\alpha=9$. ¿Qué efecto tiene $\alpha$?
+
+*R=*
+
+Primero definimos una función para la entropía de Havrda
+
+```{r havrda_fun}
+havrda <- function(pmf, alpha) (sum(pmf^alpha) - 1) /(2^(1 - alpha) - 1) 
+```
+
 
 Repitiendo el paso 3, con ambos valores de alpha para la entropía de Havrda se obtiene lo siguiente:
+
+```{r fun_3}
+# Funcion r_t
+r_t <- function(t, sigma) ifelse(t >= 16384, sigma / 4, 0)
+```
+
 
 Usando $\alpha = 3$:
 
 ```{r havrda_3_3}
-# Funcion r_t
-r_t <- function(t, sigma) ifelse(t >= 16384, sigma / 4, 0)
-
 set.seed(1234)
 datos        <- rnorm(32768, mean = 0, sd = 2) + r_t(1:32768, 2)
 wLength      <- 512
@@ -300,11 +322,11 @@ index         <- numeric(noVentanas)
 for(i in 1:noVentanas)
 {
   
-  dataW        <- datos[wLength*(i-1)+1:wLength*i]
+  dataW        <- datos[(wLength*(i-1)+1):(wLength*i)]
   histo        <- hist(dataW, breaks=8,plot=FALSE)
   pmf          <- histo$counts/sum(histo$counts)
   # Entropia de Havrda con alpha = 3
-  entropies[i] <- -1*((1 / (1 - 3)) * log(sum(pmf^3) / sum(pmf)))
+  entropies[i] <- havrda(pmf, alpha = 3)
   index[i]     <- wLength*(i-1)+1
 }
 plot(index, entropies, type = "l", main="Entropías empíricas para datos normales", xlab="Tiempo, t", ylab="Valores de entropía")
@@ -313,9 +335,6 @@ plot(index, entropies, type = "l", main="Entropías empíricas para datos normal
 Usando $\alpha = 9$:
 
 ```{r havrda_3_9}
-# Funcion r_t
-r_t <- function(t, sigma) ifelse(t >= 16384, sigma / 4, 0)
-
 set.seed(1234)
 datos        <- rnorm(32768, mean = 0, sd = 2) + r_t(1:32768, 2)
 wLength      <- 512
@@ -326,11 +345,11 @@ index         <- numeric(noVentanas)
 for(i in 1:noVentanas)
 {
   
-  dataW        <- datos[wLength*(i-1)+1:wLength*i]
+  dataW        <- datos[(wLength*(i-1)+1):(wLength*i)]
   histo        <- hist(dataW, breaks=8,plot=FALSE)
   pmf          <- histo$counts/sum(histo$counts)
-  # Entropia de Havrda con alpha = 3
-  entropies[i] <- -1*((1 / (1 - 9)) * log(sum(pmf^9) / sum(pmf)))
+  # Entropia de Havrda con alpha = 9
+  entropies[i] <- havrda(pmf, alpha = 9)
   index[i]     <- wLength*(i-1)+1
 }
 plot(index, entropies, type = "l", main="Entropías empíricas para datos normales", xlab="Tiempo, t", ylab="Valores de entropía")
@@ -338,12 +357,14 @@ plot(index, entropies, type = "l", main="Entropías empíricas para datos normal
 
 Repitiendo el paso 4, con ambos valores de alpha para la entropía de Havrda se obtiene lo siguiente:
 
+```{r fun_4}
+# Funcion r_t
+r_t <- function(t, sigma) ifelse(t >= 16384, sigma / 2, 0)
+```
+
 Usando $\alpha = 3$:
 
 ```{r havrda_4_3}
-# Funcion r_t
-r_t <- function(t, sigma) ifelse(t >= 16384, sigma / 2, 0)
-
 set.seed(1234)
 datos        <- rnorm(32768, mean = 0, sd = 2) + r_t(1:32768, 2)
 wLength      <- 512
@@ -354,11 +375,11 @@ index         <- numeric(noVentanas)
 for(i in 1:noVentanas)
 {
   
-  dataW        <- datos[wLength*(i-1)+1:wLength*i]
+  dataW        <- datos[(wLength*(i-1)+1):(wLength*i)]
   histo        <- hist(dataW, breaks=8,plot=FALSE)
   pmf          <- histo$counts/sum(histo$counts)
   # Entropia de Havrda con alpha = 3
-  entropies[i] <- -1*((1 / (1 - 3)) * log(sum(pmf^3) / sum(pmf)))
+  entropies[i] <- havrda(pmf, alpha = 3)
   index[i]     <- wLength*(i-1)+1
 }
 plot(index, entropies, type = "l", main="Entropías empíricas para datos normales", xlab="Tiempo, t", ylab="Valores de entropía")
@@ -367,9 +388,6 @@ plot(index, entropies, type = "l", main="Entropías empíricas para datos normal
 Usando $\alpha = 9$:
 
 ```{r havrda_4_9}
-# Funcion r_t
-r_t <- function(t, sigma) ifelse(t >= 16384, sigma / 2, 0)
-
 set.seed(1234)
 datos        <- rnorm(32768, mean = 0, sd = 2) + r_t(1:32768, 2)
 wLength      <- 512
@@ -380,11 +398,11 @@ index         <- numeric(noVentanas)
 for(i in 1:noVentanas)
 {
   
-  dataW        <- datos[wLength*(i-1)+1:wLength*i]
+  dataW        <- datos[(wLength*(i-1)+1):(wLength*i)]
   histo        <- hist(dataW, breaks=8,plot=FALSE)
   pmf          <- histo$counts/sum(histo$counts)
-  # Entropia de Havrda con alpha = 3
-  entropies[i] <- -1*((1 / (1 - 9)) * log(sum(pmf^9) / sum(pmf)))
+  # Entropia de Havrda con alpha = 9
+  entropies[i] <- havrda(pmf, alpha = 9)
   index[i]     <- wLength*(i-1)+1
 }
 plot(index, entropies, type = "l", main="Entropías empíricas para datos normales", xlab="Tiempo, t", ylab="Valores de entropía")
@@ -392,12 +410,15 @@ plot(index, entropies, type = "l", main="Entropías empíricas para datos normal
 
 Repitiendo el paso 5, con ambos valores de alpha para la entropía de Havrda se obtiene lo siguiente:
 
+```{r fun_5}
+# Funcion r_t
+r_t <- function(t, sigma) ifelse(t >= 16384, sigma, 0)
+```
+
+
 Usando $\alpha = 3$:
 
 ```{r havrda_5_3}
-# Funcion r_t
-r_t <- function(t, sigma) ifelse(t >= 16384, sigma, 0)
-
 set.seed(1234)
 datos        <- rnorm(32768, mean = 0, sd = 2) + r_t(1:32768, 2)
 wLength      <- 512
@@ -408,11 +429,11 @@ index         <- numeric(noVentanas)
 for(i in 1:noVentanas)
 {
   
-  dataW        <- datos[wLength*(i-1)+1:wLength*i]
+  dataW        <- datos[(wLength*(i-1)+1):(wLength*i)]
   histo        <- hist(dataW, breaks=8,plot=FALSE)
   pmf          <- histo$counts/sum(histo$counts)
   # Entropia de Havrda con alpha = 3
-  entropies[i] <- -1*((1 / (1 - 3)) * log(sum(pmf^3) / sum(pmf)))
+  entropies[i] <- havrda(pmf, alpha = 3)
   index[i]     <- wLength*(i-1)+1
 }
 plot(index, entropies, type = "l", main="Entropías empíricas para datos normales", xlab="Tiempo, t", ylab="Valores de entropía")
@@ -421,9 +442,6 @@ plot(index, entropies, type = "l", main="Entropías empíricas para datos normal
 Usando $\alpha = 9$:
 
 ```{r havrda_5_9}
-# Funcion r_t
-r_t <- function(t, sigma) ifelse(t >= 16384, sigma, 0)
-
 set.seed(1234)
 datos        <- rnorm(32768, mean = 0, sd = 2) + r_t(1:32768, 2)
 wLength      <- 512
@@ -434,26 +452,29 @@ index         <- numeric(noVentanas)
 for(i in 1:noVentanas)
 {
   
-  dataW        <- datos[wLength*(i-1)+1:wLength*i]
+  dataW        <- datos[(wLength*(i-1)+1):(wLength*i)]
   histo        <- hist(dataW, breaks=8,plot=FALSE)
   pmf          <- histo$counts/sum(histo$counts)
-  # Entropia de Havrda con alpha = 3
-  entropies[i] <- -1*((1 / (1 - 9)) * log(sum(pmf^9) / sum(pmf)))
+  # Entropia de Havrda con alpha = 9
+  entropies[i] <- havrda(pmf, alpha = 9)
   index[i]     <- wLength*(i-1)+1
 }
 plot(index, entropies, type = "l", main="Entropías empíricas para datos normales", xlab="Tiempo, t", ylab="Valores de entropía")
 ```
 
-*PASO 6*
+*PASO 6 : PENDIENTE*
 
 Repitiendo el paso 7, con ambos valores de alpha para la entropía de Havrda se obtiene lo siguiente:
 
 Usando $\alpha = 3$:
 
-```{r havrda_7_3}
+```{r fun_7}
 # Funcion r_t
 r_t <- function(t, sigma) ifelse(15872 <= t & t<= 16896, sigma, 0)
+```
 
+
+```{r havrda_7_3}
 set.seed(1234)
 datos        <- rnorm(32768, mean = 0, sd = 2) + r_t(1:32768, 2)
 wLength      <- 512
@@ -464,11 +485,11 @@ index         <- numeric(noVentanas)
 for(i in 1:noVentanas)
 {
   
-  dataW        <- datos[wLength*(i-1)+1:wLength*i]
+  dataW        <- datos[(wLength*(i-1)+1):(wLength*i)]
   histo        <- hist(dataW, breaks=8,plot=FALSE)
   pmf          <- histo$counts/sum(histo$counts)
   # Entropia de Havrda con alpha = 3
-  entropies[i] <- -1*((1 / (1 - 3)) * log(sum(pmf^3) / sum(pmf)))
+  entropies[i] <- havrda(pmf, alpha = 3)
   index[i]     <- wLength*(i-1)+1
 }
 plot(index, entropies, type = "l", main="Entropías empíricas para datos normales", xlab="Tiempo, t", ylab="Valores de entropía")
@@ -477,9 +498,6 @@ plot(index, entropies, type = "l", main="Entropías empíricas para datos normal
 Usando $\alpha = 9$:
 
 ```{r havrda_7_9}
-# Funcion r_t
-r_t <- function(t, sigma) ifelse(15872 <= t & t<= 16896, sigma, 0)
-
 set.seed(1234)
 datos        <- rnorm(32768, mean = 0, sd = 2) + r_t(1:32768, 2)
 wLength      <- 512
@@ -490,11 +508,11 @@ index         <- numeric(noVentanas)
 for(i in 1:noVentanas)
 {
   
-  dataW        <- datos[wLength*(i-1)+1:wLength*i]
+  dataW        <- datos[(wLength*(i-1)+1):(wLength*i)]
   histo        <- hist(dataW, breaks=8,plot=FALSE)
   pmf          <- histo$counts/sum(histo$counts)
-  # Entropia de Havrda con alpha = 3
-  entropies[i] <- -1*((1 / (1 - 9)) * log(sum(pmf^9) / sum(pmf)))
+  # Entropia de Havrda con alpha = 9
+  entropies[i] <- havrda(pmf, alpha = 9)
   index[i]     <- wLength*(i-1)+1
 }
 plot(index, entropies, type = "l", main="Entropías empíricas para datos normales", xlab="Tiempo, t", ylab="Valores de entropía")
