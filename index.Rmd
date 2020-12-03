@@ -149,7 +149,7 @@ Porque existen puntos cuyos valores de pmf son 0, por lo que al calcular el loga
 
 *R=*
 
-Si al momento de calcular la suma de la entropía usando la función `sum` excluyéramos estos valores con el parámetro `na.rm = TRUE`.
+Si al momento de calcular la suma de la entropía usando la función `sum` excluyéramos estos valores con el parámetro `na.rm = TRUE` se eliminarían todos los valores `NaN` y por lo tanto ya no se mostrarían discontinuidades en la gráfica anterior.
 
 3. Ahora calcule la entropía de una serie de datos normales, denotados por $X_t$ (con $\mu=0$ y $\sigma=2$) pero ahora añádanle (súmenle) una segunda función $r_t$, es decir, hallen la entropía de la serie $Y_t = X_t+r_t$ con $r_t$ definida por:
 $$ 
@@ -252,7 +252,7 @@ plot(index, entropies, type = "l", main="Entropías empíricas para datos normal
 
 *R=*
 
-
+En las primeras dos gráficas, donde $r_t$ vale $\sigma/4$ y $\sigma/2$ respectivamente, la diferencia de longitud de salto en la forma de la entropía no es muy notoria ya que ambas gráficas son muy similares. En el caso de la última gráfica donde $r_t$ vale $\sigma$, la diferencia en la longitud de salto con respecto a las gráficas anteriores es más notoria y que además presenta discontinuidades. 
 
 7. ¿Qué sucede ahora si $r_t$ es de la forma:
 $$ 
@@ -462,7 +462,7 @@ for(i in 1:noVentanas)
 plot(index, entropies, type = "l", main="Entropías empíricas para datos normales", xlab="Tiempo, t", ylab="Valores de entropía")
 ```
 
-*PASO 6 : PENDIENTE*
+*PASO 6 : CHECAR*
 
 Repitiendo el paso 7, con ambos valores de alpha para la entropía de Havrda se obtiene lo siguiente:
 
@@ -517,6 +517,11 @@ for(i in 1:noVentanas)
 }
 plot(index, entropies, type = "l", main="Entropías empíricas para datos normales", xlab="Tiempo, t", ylab="Valores de entropía")
 ```
+
+
+El efecto que tiene el parámetro $\alpha$ en la entropía de Havrda es aumentar los valores de la entropía como se observa en las gráficas anteriores. Ya que a mayor valor de $\alpha$ mayores serán los valores en la entropía.
+
+
 
 # Entropía utilizando ventanas deslizantes
 
