@@ -533,8 +533,191 @@ donde $m\Delta \le j \le m\Delta + W$ y $m=0,1,2, \ldots$. Finalmente se puede g
 
 ## Ejercicios
 
-- Implementar en `R` la metodología del cálculo de la entropía de Harvda normalizada por ventanas deslizantes. La función debe tener la forma `harvda_deslizante(datos, w.length=512, s.factor=10, a.parameter=0.8, ent.type=c("hist", "ash", "kern"))`, donde `w.length` es la longitud de la ventana, `s.factor` es el factor de deslizamiento y `a.parameter` es el parámetro $\alpha$ de la entropía de Harvda. Además la función puede calcular la entropia usando el histograma, por el método ash o por alguna metodología kernel (con el parámetro `ent.type`).
+- Implementar en `R` la metodología del cálculo de la entropía de Havrda normalizada por ventanas deslizantes. La función debe tener la forma `havrda_deslizante(datos, w.length=512, s.factor=10, a.parameter=0.8, ent.type=c("hist", "ash", "kern"))`, donde `w.length` es la longitud de la ventana, `s.factor` es el factor de deslizamiento y `a.parameter` es el parámetro $\alpha$ de la entropía de Havrda. Además la función puede calcular la entropia usando el histograma, por el método ash o por alguna metodología kernel (con el parámetro `ent.type`).
 - Aplicar la entropía calculada con los datos generados anteriormente, es decir:
   - Los pasos $3,4,5$ y $7$ en donde los datos se dan como $X_t+r_t$.
-  - ¿Tiene algún efecto el parámetro $a$ en la forma de la entropía? ¿Tiene alguna ventaja calcular la entropía de Harvda por otro método diferente al histograma?
+  - ¿Tiene algún efecto el parámetro $a$ en la forma de la entropía? ¿Tiene alguna ventaja calcular la entropía de Havrda por otro método diferente al histograma?
   - Además del histograma y los estimadores tipo kernel, existen otros métodos para estimar la distribución de una serie de datos. Investigue: ¿en qué consiste la entropía de permutación?
+
+*R=*
+
+Se usa el paquete `zeallot` para regresar más de un valor
+
+```{r library_zeallot, message=FALSE}
+pacman::p_load(zeallot)
+```
+
+Primero se define la función de Havrda normalizada
+
+```{r fun_havrda_normal}
+# Definicion de la funcion de Havrda normalizada
+havrda_normalizada <- function(pmf, n, a.parameter) sum(pmf^a.parameter - 1) / (n^(1 - a.parameter) - 1)
+```
+
+Después, esta función se usa para implementar la metodología del cálculo de la entropía por ventanas deslizantes.
+
+```{r fun_havrda_deslizante}
+# Definicion del calculo de la entropia de Havrda por ventanas deslizantes
+havrda_deslizante <- function(datos, w.length = 512, s.factor = 10, a.parameter = 0.8, ent.type = c("hist", "ash", "kern")) {
+  # Se almacena el numero de observaciones
+  n <- length(datos)
+  # Se inicializa la secuencia para la creacion de ventanas deslizantes
+  m <- 0
+  # Se inicializan los limites del rango de datos
+  inf <- 0
+  sup <- 0
+  # Se inicializa el vector de entropias
+  entropies <- c()
+  # Se inicializa el vector de indices
+  index <- c()
+  # Se crean las ventanas deslizantes mientras existan datos
+  while (sup <= n) {
+    # Se calculan los limites del rango
+    inf <- m * s.factor + 1
+    sup <- m * s.factor + w.length
+    # Se obtienen los datos dentro de la ventana deslizantes
+    dataW <- datos[inf:sup]
+    # Los datos dentro de la ventana deslizate se modifican de acuerdo a la formula
+    #dataW <- dataW * prod(((inf:sup - m*s.factor) / w.length) - 1/2)
+    # Se calcula la pmf usando el metodo adecuado
+    pmf <- switch (ent.type,
+      "hist" = {
+        hist <- hist(dataW, breaks = 8, plot = FALSE)
+        hist$counts / sum(hist$counts)
+      },
+      "ash" = {
+        hist <- ash1(bin1(dataW))
+        hist$y / sum(hist$y)
+      },
+      "kern" = {
+        hist <- bkde(dataW)
+        hist$y / sum(hist$y)
+      }
+    )
+    # Se calcula la entropía de Havrda normalizada
+    entropies <- append(entropies, havrda_normalizada(pmf, n, a.parameter))
+    # Se agrega el valor de X modificado
+    index <- append(index, m*w.length + s.factor)
+    # Se actualiza el valor de m
+    m <- m + 1
+  }
+  # Se regresa el vector X y el de entropias
+  return(list(index, entropies))
+}
+```
+
+Con esta formula se repiten los pasos 3, 4, 5 y 7.
+
+* Repitiendo el paso 3:
+
+```{r sliding_3_fun}
+# Funcion r_t
+r_t <- function(t, sigma) ifelse(t >= 16384, sigma / 4, 0)
+```
+
+```{r sliding_3}
+set.seed(1234)
+datos        <- rnorm(32768, mean = 0, sd = 2) + r_t(1:32768, 2)
+plot(datos, type = "l", main="Serie de datos normal", ylab="Valores", xlab="Tiempo, t")
+
+# Usando hist
+c(index, entropies) %<-% havrda_deslizante(datos, ent.type = "hist")
+plot(index, entropies, type = "l", main="Entropías empíricas para datos normales (usando hist)", xlab="Tiempo, t", ylab="Valores de entropía")
+
+# Usando ash
+c(index, entropies) %<-% havrda_deslizante(datos, ent.type = "ash")
+plot(index, entropies, type = "l", main="Entropías empíricas para datos normales (usando ash)", xlab="Tiempo, t", ylab="Valores de entropía")
+
+# Usando kern
+c(index, entropies) %<-% havrda_deslizante(datos, ent.type = "kern")
+plot(index, entropies, type = "l", main="Entropías empíricas para datos normales (usando kern)", xlab="Tiempo, t", ylab="Valores de entropía")
+```
+
+* Repitiendo el paso 4:
+
+```{r sliding_4_fun}
+# Funcion r_t
+r_t <- function(t, sigma) ifelse(t >= 16384, sigma / 2, 0)
+```
+
+```{r sliding_4}
+set.seed(1234)
+datos        <- rnorm(32768, mean = 0, sd = 2) + r_t(1:32768, 2)
+plot(datos, type = "l", main="Serie de datos normal", ylab="Valores", xlab="Tiempo, t")
+
+# Usando hist
+c(index, entropies) %<-% havrda_deslizante(datos, ent.type = "hist")
+plot(index, entropies, type = "l", main="Entropías empíricas para datos normales (usando hist)", xlab="Tiempo, t", ylab="Valores de entropía")
+
+# Usando ash
+c(index, entropies) %<-% havrda_deslizante(datos, ent.type = "ash")
+plot(index, entropies, type = "l", main="Entropías empíricas para datos normales (usando ash)", xlab="Tiempo, t", ylab="Valores de entropía")
+
+# Usando kern
+c(index, entropies) %<-% havrda_deslizante(datos, ent.type = "kern")
+plot(index, entropies, type = "l", main="Entropías empíricas para datos normales (usando kern)", xlab="Tiempo, t", ylab="Valores de entropía")
+```
+
+* Repitiendo el paso 5:
+
+```{r sliding_5_fun}
+# Funcion r_t
+r_t <- function(t, sigma) ifelse(t >= 16384, sigma, 0)
+```
+
+```{r sliding_5}
+set.seed(1234)
+datos        <- rnorm(32768, mean = 0, sd = 2) + r_t(1:32768, 2)
+plot(datos, type = "l", main="Serie de datos normal", ylab="Valores", xlab="Tiempo, t")
+
+# Usando hist
+c(index, entropies) %<-% havrda_deslizante(datos, ent.type = "hist")
+plot(index, entropies, type = "l", main="Entropías empíricas para datos normales (usando hist)", xlab="Tiempo, t", ylab="Valores de entropía")
+
+# Usando ash
+c(index, entropies) %<-% havrda_deslizante(datos, ent.type = "ash")
+plot(index, entropies, type = "l", main="Entropías empíricas para datos normales (usando ash)", xlab="Tiempo, t", ylab="Valores de entropía")
+
+# Usando kern
+c(index, entropies) %<-% havrda_deslizante(datos, ent.type = "kern")
+plot(index, entropies, type = "l", main="Entropías empíricas para datos normales (usando kern)", xlab="Tiempo, t", ylab="Valores de entropía")
+```
+
+* Repitiendo el paso 7:
+
+```{r sliding_7_fun}
+# Funcion r_t
+r_t <- function(t, sigma) ifelse(15872 <= t & t<= 16896, sigma, 0)
+```
+
+```{r sliding_7}
+set.seed(1234)
+datos        <- rnorm(32768, mean = 0, sd = 2) + r_t(1:32768, 2)
+plot(datos, type = "l", main="Serie de datos normal", ylab="Valores", xlab="Tiempo, t")
+
+# Usando hist
+c(index, entropies) %<-% havrda_deslizante(datos, ent.type = "hist")
+plot(index, entropies, type = "l", main="Entropías empíricas para datos normales (usando hist)", xlab="Tiempo, t", ylab="Valores de entropía")
+
+# Usando ash
+c(index, entropies) %<-% havrda_deslizante(datos, ent.type = "ash")
+plot(index, entropies, type = "l", main="Entropías empíricas para datos normales (usando ash)", xlab="Tiempo, t", ylab="Valores de entropía")
+
+# Usando kern
+c(index, entropies) %<-% havrda_deslizante(datos, ent.type = "kern")
+plot(index, entropies, type = "l", main="Entropías empíricas para datos normales (usando kern)", xlab="Tiempo, t", ylab="Valores de entropía")
+```
+
+*EXPLICAR EL EFECTO DE ALPHA Y LO DE LA ENTROPIA DE HAVRDA*
+
+* La entropía de permutación fue introducida por Christoph Bandt y Bernd Pompe, y define una medida de entropía tomando en cuenta la causalidad del tiempo de la serie de tiempo, comparando los valores vecinos en la serie de tiempo.Por lo que esta entropía es equivalente a la Entropía de Shannon de una secuencia de patrones ordinales (símbolos discretos que codifican qué tanto las entradas consecutivas de la serie de tiempo se relacionan entre sí en términos de la posición y valor). Su función se define como:
+
+$$
+PeEn = - \sum_i^{N!}{p_i'log(p_i')}
+$$
+
+Donde $p_i'$ representa las frecuencias relativas de los posibles patrones de secuencias de símbolos, denominadas permutaciones. Las permutación se relaciona a la secuencia de $m$ (dimensión embebida) valores de la serie original.
+
+# Referencias:
+
+Baldini, G. (2020). **On the Application of Entropy Measures with Sliding Window for Intrusion Detection in Automotive In-Vehicle Networks**. Entropy 2020, 22, 1044.
