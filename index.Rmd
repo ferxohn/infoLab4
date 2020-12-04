@@ -1,12 +1,14 @@
 ---
 title: "Teoría de la Información"
-subtitle: "Estimación de la entropía en series de datos"
 author: "Vanessa Martínez Romero, Moisés Emiliano Arellano Ávila y Fernando Gómez Perera"
 date: "25/11/2020"
 output:
   rmdformats::readthedown:
     highlight: zenburn
-    cards: false
+    cards: no
+  pdf_document: default
+always_allow_html: true
+subtitle: Estimación de la entropía en series de datos
 ---
 
 
@@ -151,6 +153,31 @@ Porque existen puntos cuyos valores de pmf son 0, por lo que al calcular el loga
 
 Si al momento de calcular la suma de la entropía usando la función `sum` excluyéramos estos valores con el parámetro `na.rm = TRUE` se eliminarían todos los valores `NaN` y por lo tanto ya no se mostrarían discontinuidades en la gráfica anterior.
 
+Para comprobarlo, se ejemplifica esto tomando como base la gráfica anterior.
+
+```{r ejemplo_continuo}
+set.seed(1234)
+datos        <- rnorm(32768)
+wLength      <- 512
+plot(datos, type = "l", main="Serie de datos normal", ylab="Valores", xlab="Tiempo, t")
+noVentanas    <- length(datos)/wLength
+entropies     <- numeric(noVentanas)
+index         <- numeric(noVentanas)
+for(i in 1:noVentanas)
+{
+  
+  dataW        <- datos[(wLength*(i-1)+1):(wLength*i)]
+  histo        <- hist(dataW, breaks=8,plot=FALSE)
+  pmf          <- histo$counts/sum(histo$counts)
+  # Se excluye de la suma los valores que son NA
+  entropies[i] <- -1*sum(pmf*log(pmf), na.rm = TRUE)
+  index[i]     <- wLength*(i-1)+1
+}
+plot(index, entropies, type = "l", main="Entropías empíricas para datos normales", xlab="Tiempo, t", ylab="Valores de entropía")
+```
+
+De igual forma, podría sumarse a todos los valores un número muy pequeño para que no se tengan probabilidades de 0, pero tampoco se modifiquen radicalmente las probabilidades obtenidas.
+
 3. Ahora calcule la entropía de una serie de datos normales, denotados por $X_t$ (con $\mu=0$ y $\sigma=2$) pero ahora añádanle (súmenle) una segunda función $r_t$, es decir, hallen la entropía de la serie $Y_t = X_t+r_t$ con $r_t$ definida por:
 $$ 
 r_t = \begin{cases}
@@ -165,7 +192,7 @@ $$
 r_t <- function(t, sigma) ifelse(t >= 16384, sigma / 4, 0)
 
 set.seed(1234)
-datos        <- rnorm(32768, mean = 0, sd = 2) + r_t(1:32768, 2)
+datos        <- rnorm(32768, mean = 0, sd = 2) + r_t(1:32768, sigma = 2)
 wLength      <- 512
 plot(datos, type = "l", main="Serie de datos normal", ylab="Valores", xlab="Tiempo, t")
 noVentanas    <- length(datos)/wLength
@@ -198,7 +225,7 @@ $$
 r_t <- function(t, sigma) ifelse(t >= 16384, sigma / 2, 0)
 
 set.seed(1234)
-datos        <- rnorm(32768, mean = 0, sd = 2) + r_t(1:32768, 2)
+datos        <- rnorm(32768, mean = 0, sd = 2) + r_t(1:32768, sigma = 2)
 wLength      <- 512
 plot(datos, type = "l", main="Serie de datos normal", ylab="Valores", xlab="Tiempo, t")
 noVentanas    <- length(datos)/wLength
@@ -230,7 +257,7 @@ $$
 r_t <- function(t, sigma) ifelse(t >= 16384, sigma, 0)
 
 set.seed(1234)
-datos        <- rnorm(32768, mean = 0, sd = 2) + r_t(1:32768, 2)
+datos        <- rnorm(32768, mean = 0, sd = 2) + r_t(1:32768, sigma = 2)
 wLength      <- 512
 plot(datos, type = "l", main="Serie de datos normal", ylab="Valores", xlab="Tiempo, t")
 noVentanas    <- length(datos)/wLength
@@ -252,7 +279,11 @@ plot(index, entropies, type = "l", main="Entropías empíricas para datos normal
 
 *R=*
 
-En las primeras dos gráficas, donde $r_t$ vale $\sigma/4$ y $\sigma/2$ respectivamente, la diferencia de longitud de salto en la forma de la entropía no es muy notoria ya que ambas gráficas son muy similares. En el caso de la última gráfica donde $r_t$ vale $\sigma$, la diferencia en la longitud de salto con respecto a las gráficas anteriores es más notoria y que además presenta discontinuidades. 
+En las primeras dos gráficas, donde $r_t$ vale $\sigma/4$ y $\sigma/2$ respectivamente, la diferencia de longitud de salto en la forma de la entropía no es muy notoria ya que ambas gráficas son muy similares. 
+
+n el caso de la última gráfica donde $r_t$ vale $\sigma$, la diferencia en la longitud de salto con respecto a las gráficas anteriores es más notoria y que además presenta discontinuidades. 
+
+En todos los casos las gráficas presentan diferencias en las crestas bajas, haciendo que los picos en estas zonas cambien en mayor o menor medida su forma. Y la mayoría de las variaciones no se encuentran en la entropía, sino en la forma de la serie de datos.
 
 7. ¿Qué sucede ahora si $r_t$ es de la forma:
 $$ 
@@ -288,7 +319,7 @@ for(i in 1:noVentanas)
 plot(index, entropies, type = "l", main="Entropías empíricas para datos normales", xlab="Tiempo, t", ylab="Valores de entropía")
 ```
 
-
+Respecto al gráfico anterior, la entropía tiene casi la misma forma. De hecho, las variaciones son muy pequeñas. Donde sí varía en mayor medida es en la forma de la serie de datos, que en general es muy diferente a todas las series de datos anteriores.
 
 8. Repita los pasos 3-7 pero ahora usando la entropía de Havrda con parámetro $\alpha=3$ y $\alpha=9$. ¿Qué efecto tiene $\alpha$?
 
@@ -297,7 +328,7 @@ plot(index, entropies, type = "l", main="Entropías empíricas para datos normal
 Primero definimos una función para la entropía de Havrda
 
 ```{r havrda_fun}
-havrda <- function(pmf, alpha) (sum(pmf^alpha) - 1) /(2^(1 - alpha) - 1) 
+havrda <- function(pmf, alpha) sum(pmf^alpha - 1) / (2^(1 - alpha) - 1) 
 ```
 
 
@@ -462,7 +493,7 @@ for(i in 1:noVentanas)
 plot(index, entropies, type = "l", main="Entropías empíricas para datos normales", xlab="Tiempo, t", ylab="Valores de entropía")
 ```
 
-*PASO 6 : CHECAR*
+Repitiendo el paso 6, el salto de longitud que tiene $r_t$ provoca que la entropía varíe un poco en sus picos, haciendo que aparezcan más picos conforme aumenta el valor de $sigma$ o que se modifique su altura.
 
 Repitiendo el paso 7, con ambos valores de alpha para la entropía de Havrda se obtiene lo siguiente:
 
@@ -518,10 +549,7 @@ for(i in 1:noVentanas)
 plot(index, entropies, type = "l", main="Entropías empíricas para datos normales", xlab="Tiempo, t", ylab="Valores de entropía")
 ```
 
-
-El efecto que tiene el parámetro $\alpha$ en la entropía de Havrda es aumentar los valores de la entropía como se observa en las gráficas anteriores. Ya que a mayor valor de $\alpha$ mayores serán los valores en la entropía.
-
-
+El efecto que tiene el parámetro $\alpha$ en la entropía de Havrda es aumentar los valores de la entropía como se observa en las gráficas anteriores, ya que, a mayor valor de $\alpha$, mayores serán los valores en la entropía. Sin embargo, el patrón de la entropía es el mismo en cada caso, solamente variando la altura de acuerdo a su valor de $\alpha$, como ya se explicó.
 
 # Entropía utilizando ventanas deslizantes
 
@@ -551,7 +579,7 @@ Primero se define la función de Havrda normalizada
 
 ```{r fun_havrda_normal}
 # Definicion de la funcion de Havrda normalizada
-havrda_normalizada <- function(pmf, n, a.parameter) sum(pmf^a.parameter - 1) / (n^(1 - a.parameter) - 1)
+havrda_normalizada <- function(pmf, N, a.parameter) sum(pmf^a.parameter - 1) / (N^(1 - a.parameter) - 1)
 ```
 
 Después, esta función se usa para implementar la metodología del cálculo de la entropía por ventanas deslizantes.
@@ -560,9 +588,11 @@ Después, esta función se usa para implementar la metodología del cálculo de 
 # Definicion del calculo de la entropia de Havrda por ventanas deslizantes
 havrda_deslizante <- function(datos, w.length = 512, s.factor = 10, a.parameter = 0.8, ent.type = c("hist", "ash", "kern")) {
   # Se almacena el numero de observaciones
-  n <- length(datos)
+  N <- length(datos)
   # Se inicializa la secuencia para la creacion de ventanas deslizantes
   m <- 0
+  # Se inicializa la secuencia n
+  n <- 1
   # Se inicializan los limites del rango de datos
   inf <- 0
   sup <- 0
@@ -570,19 +600,17 @@ havrda_deslizante <- function(datos, w.length = 512, s.factor = 10, a.parameter 
   entropies <- c()
   # Se inicializa el vector de indices
   index <- c()
+  # Se inicializan los limites del rango
+  inf <- m * s.factor + 1
+  sup <- m * s.factor + w.length
   # Se crean las ventanas deslizantes mientras existan datos
-  while (sup <= n) {
-    # Se calculan los limites del rango
-    inf <- m * s.factor + 1
-    sup <- m * s.factor + w.length
+  while (sup <= N) {
     # Se obtienen los datos dentro de la ventana deslizantes
     dataW <- datos[inf:sup]
-    # Los datos dentro de la ventana deslizate se modifican de acuerdo a la formula
-    #dataW <- dataW * prod(((inf:sup - m*s.factor) / w.length) - 1/2)
     # Se calcula la pmf usando el metodo adecuado
     pmf <- switch (ent.type,
       "hist" = {
-        hist <- hist(dataW, breaks = 8, plot = FALSE)
+        hist <- hist(dataW, breaks = 1000, plot = FALSE)
         hist$counts / sum(hist$counts)
       },
       "ash" = {
@@ -595,11 +623,15 @@ havrda_deslizante <- function(datos, w.length = 512, s.factor = 10, a.parameter 
       }
     )
     # Se calcula la entropía de Havrda normalizada
-    entropies <- append(entropies, havrda_normalizada(pmf, n, a.parameter))
-    # Se agrega el valor de X modificado
-    index <- append(index, m*w.length + s.factor)
-    # Se actualiza el valor de m
+    entropies <- append(entropies, havrda_normalizada(pmf, N, a.parameter))
+    # Se agrega el indice
+    index <- append(index, n*w.length + s.factor)
+    # Se actualiza el valor de m y n
     m <- m + 1
+    n <- n + 1
+    # Se actualizan los limites del rango
+    inf <- m * s.factor + 1
+    sup <- m * s.factor + w.length
   }
   # Se regresa el vector X y el de entropias
   return(list(index, entropies))
@@ -708,7 +740,9 @@ c(index, entropies) %<-% havrda_deslizante(datos, ent.type = "kern")
 plot(index, entropies, type = "l", main="Entropías empíricas para datos normales (usando kern)", xlab="Tiempo, t", ylab="Valores de entropía")
 ```
 
-*EXPLICAR EL EFECTO DE ALPHA Y LO DE LA ENTROPIA DE HAVRDA*
+* (PENDIENTE: Explicación sobre parámetro $\alpha$ en cómo afecta la entropía de Havrda normalizada)
+
+* Calcular la entropía de Havrda con un método diferente al histograma tiene la ventaja de que la gráfica de los valores de la entropía sale más definida, ya que los paquetes *ash* y *kernsmoothh* suavizan más la gráfica a diferencia del histograma, que hasta con 1,000 bins se sigue viendo muy cuadrada. 
 
 * La entropía de permutación fue introducida por Christoph Bandt y Bernd Pompe, y define una medida de entropía tomando en cuenta la causalidad del tiempo de la serie de tiempo, comparando los valores vecinos en la serie de tiempo.Por lo que esta entropía es equivalente a la Entropía de Shannon de una secuencia de patrones ordinales (símbolos discretos que codifican qué tanto las entradas consecutivas de la serie de tiempo se relacionan entre sí en términos de la posición y valor). Su función se define como:
 
