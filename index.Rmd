@@ -3,10 +3,10 @@ title: "Teoría de la Información"
 author: "Vanessa Martínez Romero, Moisés Emiliano Arellano Ávila y Fernando Gómez Perera"
 date: "25/11/2020"
 output:
+  pdf_document: default
   rmdformats::readthedown:
     highlight: zenburn
     cards: no
-  pdf_document: default
 always_allow_html: true
 subtitle: Estimación de la entropía en series de datos
 ---
@@ -49,7 +49,7 @@ Usando el paquete `ASH`, la `pmf` se calcula de la siguiente forma.
 pacman::p_load(ash)
 
 # Se calcula el histograma desplazado promediado univariado (en inglés, univariate averaged shifted histogram o ASH) usando un kernel polinomial, que es el que usa por defecto el paquete.
-histogram_ash <- ash1(bin1(datos))
+invisible(capture.output(histogram_ash <- ash1(bin1(datos))))
 
 pmf <- histogram_ash$y / sum(histogram_ash$y)
 sum(pmf)
@@ -614,7 +614,7 @@ havrda_deslizante <- function(datos, w.length = 512, s.factor = 10, a.parameter 
         hist$counts / sum(hist$counts)
       },
       "ash" = {
-        hist <- ash1(bin1(dataW))
+        invisible(capture.output(hist <- ash1(bin1(dataW))))
         hist$y / sum(hist$y)
       },
       "kern" = {
@@ -740,9 +740,39 @@ c(index, entropies) %<-% havrda_deslizante(datos, ent.type = "kern")
 plot(index, entropies, type = "l", main="Entropías empíricas para datos normales (usando kern)", xlab="Tiempo, t", ylab="Valores de entropía")
 ```
 
-* (PENDIENTE: Explicación sobre parámetro $\alpha$ en cómo afecta la entropía de Havrda normalizada)
+* Para entender el efecto de $\alpha$ sobre la forma de la entropía, se repetirá el caso 7 con distintos valores de $\alpha$ y usando `kern`.
 
-* Calcular la entropía de Havrda con un método diferente al histograma tiene la ventaja de que la gráfica de los valores de la entropía sale más definida, ya que los paquetes *ash* y *kernsmoothh* suavizan más la gráfica a diferencia del histograma, que hasta con 1,000 bins se sigue viendo muy cuadrada. 
+Con $\alpha = 1.1$
+
+```{r 7_alpha_1.1}
+c(index, entropies) %<-% havrda_deslizante(datos, a.parameter = 1.1, ent.type = "kern")
+plot(index, entropies, type = "l", main="Entropías empíricas para datos normales (usando kern)", xlab="Tiempo, t", ylab="Valores de entropía")
+```
+
+Con $\alpha = 2$:
+
+```{r 7_alpha_2}
+c(index, entropies) %<-% havrda_deslizante(datos, a.parameter = 2, ent.type = "kern")
+plot(index, entropies, type = "l", main="Entropías empíricas para datos normales (usando kern)", xlab="Tiempo, t", ylab="Valores de entropía")
+```
+
+Con $\alpha = 4$:
+
+```{r 7_alpha_4}
+c(index, entropies) %<-% havrda_deslizante(datos, a.parameter = 4, ent.type = "kern")
+plot(index, entropies, type = "l", main="Entropías empíricas para datos normales (usando kern)", xlab="Tiempo, t", ylab="Valores de entropía")
+```
+
+Con $\alpha = 7$
+
+```{r 7_alpha_7}
+c(index, entropies) %<-% havrda_deslizante(datos, a.parameter = 7, ent.type = "kern")
+plot(index, entropies, type = "l", main="Entropías empíricas para datos normales (usando kern)", xlab="Tiempo, t", ylab="Valores de entropía")
+```
+
+Aunque la forma de la entropía sigue siendo la misma, lo que hace $\alpha$ es trasladar la función sobre el eje de la $Y$, así como disminuir el tamaño de la misma, haciéndola cada vez más pequeña hasta llegar a un punto donde la entropía se vuelve una línea horizontal.
+
+Finalmente, calcular la entropía de Havrda con un método diferente al histograma tiene la ventaja de que la gráfica de los valores de la entropía sale más definida, ya que los paquetes *ash* y *kernsmoothh* suavizan más la gráfica a diferencia del histograma, que hasta con 1,000 bins se sigue viendo muy cuadrada. 
 
 * La entropía de permutación fue introducida por Christoph Bandt y Bernd Pompe, y define una medida de entropía tomando en cuenta la causalidad del tiempo de la serie de tiempo, comparando los valores vecinos en la serie de tiempo.Por lo que esta entropía es equivalente a la Entropía de Shannon de una secuencia de patrones ordinales (símbolos discretos que codifican qué tanto las entradas consecutivas de la serie de tiempo se relacionan entre sí en términos de la posición y valor). Su función se define como:
 
