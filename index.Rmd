@@ -294,6 +294,11 @@ r_t = \begin{cases}
 $$
 ?
 
+
+
+\pagebreak
+
+
 *R=*
 
 ```{r rt_entropy_6}
@@ -558,6 +563,20 @@ $$
 X(m; W, \Delta) = x_j \times \Pi(\frac{t-m\Delta}{W}-\frac{1}{2}),
 $$
 donde $m\Delta \le j \le m\Delta + W$ y $m=0,1,2, \ldots$. Finalmente se puede graficar $nW + \Delta, n=1,2,3, \ldots$ contra las entropías y verificar algún patrón en los datos.
+
+
+
+
+
+
+
+\pagebreak
+
+
+
+
+
+
 
 ## Ejercicios
 
